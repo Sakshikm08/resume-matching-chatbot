@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <div class="hero-text">
+    <h1>Find the right talent with a single message.</h1>
+    <p>Describe the skills and experience you need. The bot ranks your resumes and explains every match.</p>
+  </div>
+</section>
+
+<section class="chat-panel">
+  <form class="chat-form" method="post" action="/search">
+    <label for="message">Describe your ideal candidate</label>
+    <textarea id="message" name="message" rows="3"
+      placeholder="Example: Need 3–5 years in Python, FastAPI, Docker and AWS, remote-friendly.">{{ query }}</textarea>
+    <div class="form-row">
+      <div>
+        <label for="top_k">How many results?</label>
+        <input type="number" id="top_k" name="top_k" value="5" min="1" max="20" />
+      </div>
+      <button type="submit" class="btn-primary">Search resumes</button>
+    </div>
+    {% if message %}
+      <p class="status">{{ message }}</p>
+    {% endif %}
+  </form>
+</section>
+
+<header class="header">
+    <div class="logo">Talent<span>Scout</span></div>
+    <a href="/manage_resumes" style="color: var(--accent); text-decoration: none;">
+        Manage Resumes
+    </a>
+</header>
+
+
+<section class="resume-upload-panel">
+  <form method="post" action="/upload_resume" enctype="multipart/form-data" class="resume-upload-form">
+  <h2>Upload Resume</h2>
+  <input type="file" id="resume_file" name="resume_file" accept=".pdf,.txt" required />
+  <button type="submit" class="btn-primary">Upload Resume</button>
+</form>
+</section>
+
+
+<section class="results">
+  {% if results and results|length > 0 %}
+    <h2>Top matches</h2>
+    <div class="card-grid">
+      {% for r in results %}
+      <article class="card">
+        <div class="card-header">
+          <h3>{{ r.candidate_name }}</h3>
+          <span class="title">{{ r.title or "Candidate" }}</span>
+        </div>
+        <div class="meta">
+          {% if r.location %}
+            <span class="meta-pill">{{ r.location }}</span>
+          {% endif %}
+          {% if r.years_experience %}
+            <span class="meta-pill">{{ r.years_experience }} yrs</span>
+          {% endif %}
+        </div>
+
+        <div class="score-row">
+          <div class="score-label">Match score</div>
+          <div class="score-bar">
+            <!-- jinja variable below; VS Code error is ignorable -->
+            <div class="score-bar-fill" style="width: {{ (r.match_score or 0)|float }}%;"></div>
+
+
+          </div>
+          <span class="score-value">{{ r.match_score }}%</span>
+        </div>
+
+        <div class="chips">
+          {% for s in r.skills %}
+            <span class="chip">{{ s }}</span>
+
+          {% endfor %}
+        </div>
+
+        <p class="explanation">{{ r.explanation }}</p>
+      </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="empty-state">No results yet. Describe the profile you are looking for and hit “Search resumes”.</p>
+  {% endif %}
+</section>
+{% endblock %}

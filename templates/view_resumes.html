@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<section>
+  <h2>All Resumes in Database</h2>
+  <p>Total: {{ resumes|length }}</p>
+  
+  {% if resumes %}
+    <div class="card-grid">
+      {% for r in resumes %}
+      <article class="card">
+        <h3>{{ r.candidate_name }}</h3>
+        <p><strong>Title:</strong> {{ r.title or "N/A" }}</p>
+        <p><strong>Experience:</strong> {{ r.years_experience or "N/A" }} years</p>
+        <p><strong>Location:</strong> {{ r.location or "N/A" }}</p>
+        <p><strong>Skills:</strong> 
+          {% for s in r.skills %}
+            <span class="chip">{{ s }}</span>
+
+          {% endfor %}
+        </p>
+        <p><strong>Text preview:</strong> {{ r.raw_text[:200] }}...</p>
+      </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p>No resumes found in database.</p>
+  {% endif %}
+</section>
+{% endblock %}

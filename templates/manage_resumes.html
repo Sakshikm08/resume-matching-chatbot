@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Resumes</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .manage-container {
+            max-width: 1100px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+        .resume-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .resume-item {
+            background: var(--glass-color, #fff);
+            border: 2px solid var(--border-subtle, #e0e7ef);
+            border-radius: var(--radius-lg, 16px);
+            padding: 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 18px rgba(106,138,254,0.1);
+        }
+        .resume-info {
+            flex: 1;
+        }
+        .resume-info h3 {
+            margin: 0 0 0.3rem 0;
+            color: var(--accent, #6a8afe);
+        }
+        .resume-info p {
+            margin: 0.2rem 0;
+            font-size: 0.9rem;
+            color: var(--text-muted, #8a99b5);
+        }
+        .btn-delete {
+            background: linear-gradient(90deg, #ff7b97, #ff9a8b);
+            color: white;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 999px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        .btn-delete:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(255,123,151,0.3);
+        }
+        .empty {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted, #8a99b5);
+        }
+        .chip {
+            display: inline-block;
+            font-size: 0.81rem;
+            padding: 0.19rem 0.58rem;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            border: 1px solid rgba(106,138,254,0.29);
+            font-weight: 500;
+            margin-right: 0.3rem;
+            margin-bottom: 0.3rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">Talent<span>Scout</span></div>
+        <a href="/" style="color: var(--accent, #6a8afe); text-decoration: none;">← Back to Search</a>
+    </header>
+
+    <div class="manage-container">
+        <h1>Manage Resumes</h1>
+        <p style="color: var(--text-muted, #8a99b5); margin-bottom: 1.5rem;">
+            Total resumes: <strong>{{ resumes|length }}</strong>
+        </p>
+
+        {% if resumes %}
+        <div class="resume-list">
+            {% for r in resumes %}
+            <div class="resume-item">
+                <div class="resume-info">
+                    <h3>{{ r.candidate_name }}</h3>
+                    
+                    {% if r.title %}
+                    <p><strong>Title:</strong> {{ r.title }}</p>
+                    {% endif %}
+                    
+                    {% if r.years_experience and r.years_experience > 0 %}
+                    <p><strong>Experience:</strong> {{ r.years_experience }} years</p>
+                    {% endif %}
+                    
+                    {% if r.location %}
+                    <p><strong>Location:</strong> {{ r.location }}</p>
+                    {% endif %}
+                    
+                    {% if r.skills and r.skills|length > 0 %}
+                    <p><strong>Skills:</strong></p>
+                    <div>
+                        {% for s in r.skills %}
+                            <span class="chip">{{ s }}</span>
+
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <details style="margin-top: 0.5rem;">
+                        <summary style="cursor: pointer; color: var(--accent); font-size: 0.85rem;">📄 View full resume text</summary>
+                        <p style="font-size: 0.85rem; margin-top: 0.5rem; color: var(--text-muted); max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.02); padding: 0.75rem; border-radius: 8px; white-space: pre-wrap; line-height: 1.5;">
+                            {{ r.raw_text }}
+                        </p>
+                    </details>
+                </div>
+                <button class="btn-delete" onclick="deleteResume({{ r.id }}, '{{ r.candidate_name }}')">
+                    Delete
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty">
+            <p>No resumes in database.</p>
+            <a href="/" style="color: var(--accent, #6a8afe);">Upload some resumes</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        async function deleteResume(id, name) {
+            if (!confirm(`Delete resume for ${name}?`)) return;
+            
+            try {
+                const response = await fetch(`/delete_resume/${id}`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Resume deleted successfully!');
+                    location.reload();
+                } else {
+                    alert('Failed to delete resume: ' + data.message);
+                }
+            } catch (error) {
+                alert('Error deleting resume: ' + error);
+            }
+        }
+    </script>
+</body>
+</html>
