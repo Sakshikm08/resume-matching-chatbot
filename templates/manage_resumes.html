@@ -106,9 +106,9 @@
                     <p><strong>Skills:</strong></p>
                     <div>
                         {% for s in r.skills %}
-                            <span class="chip">{{ s }}</span>
+  <span class="chip">{{ s.name }}</span>
+{% endfor %}
 
-                        {% endfor %}
                     </div>
                     {% endif %}
                     
