@@ -36,6 +36,11 @@ def get_db():
 @app.on_event("startup")
 def startup_event():
     init_db()
+    db = SessionLocal()
+    try:
+        dedupe_resumes(db)
+    finally:
+        db.close()
     build_index()
 
 
@@ -74,6 +79,29 @@ def build_explanation(resume: Resume, must_have_skills: List[str], sim_score: fl
         parts.append(f"Missing: {', '.join(missing)}")
     parts.append(f"Similarity {sim_score:.2f}, skill match {skill_match_score:.2f}")
     return " | ".join(parts)
+
+from sqlalchemy import func
+
+def dedupe_resumes(db: Session):
+    """
+    Keep one resume per identical raw_text, delete the others.
+    """
+    # Find min(id) for each raw_text
+    subq = (
+        db.query(func.min(Resume.id).label("keep_id"))
+        .group_by(Resume.raw_text)
+        .subquery()
+    )
+
+    # Delete all resumes whose id is not in the keep set
+    deleted = (
+        db.query(Resume)
+        .filter(~Resume.id.in_(db.query(subq.c.keep_id)))
+        .delete(synchronize_session=False)
+    )
+    db.commit()
+    return deleted
+
 
 
 def extract_resume_info(raw_text: str):
@@ -263,6 +291,8 @@ async def upload_resume(
             years_experience=info["years_experience"],
             location=info["location"],
         )
+        dedupe_resumes(db)  # <- remove duplicates
+        
         build_index()
 
         success_parts = [f"✅ Resume uploaded: {info['candidate_name']}"]
@@ -278,6 +308,9 @@ async def upload_resume(
             "index.html",
             {"request": request, "results": [], "query": "", "message": success_message},
         )
+        
+       
+
     except Exception as e:
         import traceback
 
